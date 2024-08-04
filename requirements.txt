@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+httpx
+pytest
+pytest-asyncio
+langchain
+langchain-groq
