@@ -1,6 +1,6 @@
 # app/api/chat_routes.py
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, status, Response
+# from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from typing import List, Tuple
 from app.services.chat_service import ChatService
@@ -9,6 +9,10 @@ from app.services.llm_service import LLMService
 from app.utils.context_manager import ContextManager
 
 router = APIRouter()
+
+llm_service = LLMService()
+context_manager = ContextManager()
+chat_service = ChatService(llm_service, context_manager)
 
 class ErrorResponse(BaseModel):
     detail: str
@@ -20,9 +24,7 @@ class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=1000)
 
 def get_chat_service():
-    llm_service = LLMService()
-    context_manager = ContextManager()
-    return ChatService(llm_service, context_manager)
+    return chat_service
 
 @router.post("/chat", response_model=ChatResponse, responses={422: {"model": ErrorResponse}, 500: {"model": ErrorResponse}})
 async def chat(request: ChatRequest, chat_service: ChatService = Depends(get_chat_service)):
@@ -46,6 +48,6 @@ async def get_conversation(chat_service: ChatService = Depends(get_chat_service)
 def clear_conversation(chat_service: ChatService = Depends(get_chat_service)):
     try:
         chat_service.clear_conversation()
-        return JSONResponse(status_code=status.HTTP_204_NO_CONTENT, content=None)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

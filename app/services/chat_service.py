@@ -3,22 +3,21 @@ from app.utils.context_manager import ContextManager
 from app.models.chat_models import ChatResponse
 from typing import List, Tuple
 
+import logging
+logger = logging.getLogger(__name__)
+
 class ChatService:
     def __init__(self, llm_service: LLMService, context_manager: ContextManager):
         self.llm_service = llm_service
         self.context_manager = context_manager
 
     async def process_message(self, message: str) -> ChatResponse:
-        # Add user message to context
         self.context_manager.add_to_context(f"User: {message}")
 
-        # Generate prompt with context
         prompt = self._generate_prompt(message)
 
-        # Get LLM response
         llm_response = await self.llm_service.generate_response(prompt)
 
-        # Add AI response to context
         self.context_manager.add_to_context(f"AI: {llm_response}")
 
         return ChatResponse(response=llm_response)
@@ -43,6 +42,8 @@ class ChatService:
                 conversation.append(("user", entry[6:]))
             elif entry.startswith("AI: "):
                 conversation.append(("ai", entry[4:]))
+        # logger.info(f"Current context (in get_conversation_history()): {context}")
+        # logger.info(f"Conversation history: {conversation}")
         return conversation
 
     def clear_conversation(self) -> None:
