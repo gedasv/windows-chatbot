@@ -15,17 +15,14 @@ Key features:
 
 ## Project Structure
 
-Here's how the project is organized:
-
-**app/**: Contains the core application code.
+- **app/**: Contains the core application code.
   - **api/**: Handles API endpoints.
   - **models/**: Defines data models.
   - **services/**: Contains business logic and services.
   - **utils/**: Utility functions and helpers.
   - **main.py**: Entry point of the application.
-  - **config.py**: Configuration settings.
 
-- **tests/**: Holds test cases for the project.
+- **tests/**: Holds test cases.
 
 - **docs/**: Documentation files.
 
@@ -33,63 +30,58 @@ Here's how the project is organized:
   - **templates/**: HTML templates for the web interface.
   - **app.py**: Main file for the web application.
 
+
 ## Setup and Installation
 
 1. Clone the repository:
 
-   git clone https://github.com/yourusername/window_manufacturing_chatbot.git
-   cd window_manufacturing_chatbot
+   `git clone https://github.com/gedasv/windows-chatbot.git`
+   
+   `cd windows-chatbot`
 
 2. Set up the environment variables:
    Create a .env file in the root directory with the following content:
 
-   GROQ_API_KEY=[your_groq_api_key_here]
+```
+   GROQ_API_KEY=[groq_key_here]
+   
    MODEL_NAME=llama3-8b-8192
+```
 
 3. Build and run the Docker containers:
 
-   docker-compose up --build
+   `docker-compose up --build`
 
 This will start both the backend API server and the web application.
+You should be able to accesss the web interface in `http://127.0.0.1:5000/` in your browser.
 
-## Usage
+---
 
-Once the containers are up and running:
+To run the services separately for development, create a separate Python env, 
+install `requirements.txt` in both app and webapp, and then:
 
-1. Access the web interface at http://localhost:5000 in your browser.
-2. Start chatting with the bot about window manufacturing topics.
-3. The conversation history and context will be maintained throughout your session.
+1. Start the backend:
+
+   `uvicorn app.main:app --host 0.0.0.0 --port 8000`
+
+2. In a separate terminal, start the web application:
+
+   `python webapp/app.py`
+
 
 ## API Endpoints
 
 - POST /api/chat: Send a message to the chatbot
-- GET /api/conversation: Retrieve the current conversation history
+- GET /api/conversation: Retrieve the current conversation history with context
 - POST /api/clear: Clear the current conversation history
 
-For detailed API documentation, visit http://localhost:8000/docs after starting the backend server.
-
-## Development
-
-To run the services separately for development:
-
-1. Start the backend:
-
-   uvicorn app.main:app --host 0.0.0.0 --port 8000
-
-2. In a separate terminal, start the web application:
-
-   python webapp/app.py
 
 ## Testing
 
-Run the tests using pytest:
+There is also a little testing suite. You can run the tests using pytest (when in root folder):
 
-pytest
+`pytest tests`
 
-## Contributing
+## Documentation
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License.
+You can view the full HTML documentation online at [https://gedasv.github.io/windows-chatbot/](https://gedasv.github.io/windows-chatbot/)
