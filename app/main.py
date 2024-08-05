@@ -19,9 +19,20 @@ from app.utils.context_manager import ContextManager
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Custom logging middleware
 class LoggingMiddleware(BaseHTTPMiddleware):
+    """
+    Custom logging middleware for FastAPI.
+    I would put this in a separate file, but it's a small project.
+    """
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        """
+        Process the request and log information about it.
+        Logs the request method, path, status code, and processing time for each request.
+        
+        :param request: The incoming request object
+        :param call_next: The next middleware or route handler in the chain
+        :return: The response from the next middleware or route handler
+        """
         start_time = time.time()
         response = await call_next(request)
         process_time = time.time() - start_time
@@ -31,11 +42,21 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 # Lifespan context manager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for the FastAPI application.
+    
+    :param app: The FastAPI application instance
+    """
     logger.info("Application is starting up")
     yield
     logger.info("Application is shutting down")
 
 def create_application() -> FastAPI:
+    """
+    Create and configure the FastAPI application. Initialize middleware.
+    
+    :return: The configured FastAPI application instance
+    """
     app = FastAPI(
         title="Window Manufacturing Chatbot",
         description="API for a chatbot specializing in window manufacturing",
@@ -48,7 +69,7 @@ def create_application() -> FastAPI:
     app.add_middleware(GZipMiddleware, minimum_size=1000)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # TODO: Update this for production
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -60,8 +81,7 @@ def setup_routes(app: FastAPI) -> None:
     """
     Set up the routes for the application.
 
-    Args:
-        app (FastAPI): The FastAPI application instance.
+    :param app: The FastAPI application instance
     """
     app.include_router(
         chat_routes.router,
@@ -71,25 +91,49 @@ def setup_routes(app: FastAPI) -> None:
 
     @app.get("/")
     async def root() -> dict:
-        """Root endpoint."""
+        """
+        Root endpoint.
+        
+        :return: A welcome message dictionary
+        """
         return {"message": "Welcome to the Window Manufacturing Chatbot API"}
 
     @app.get("/health")
     async def health_check() -> dict:
-        """Health check endpoint."""
+        """
+        Health check endpoint.
+        
+        :return: A dictionary indicating the health status of the application
+        """
         return {"status": "healthy"}
 
-# Dependency injection
 def get_llm_service():
+    """
+    Dependency injection function for LLMService.
+    
+    :return: An instance of LLMService
+    """
     return LLMService()
 
 def get_context_manager():
+    """
+    Dependency injection function for ContextManager.
+    
+    :return: An instance of ContextManager
+    """
     return ContextManager()
 
 def get_chat_service(
     llm_service: LLMService = Depends(get_llm_service),
     context_manager: ContextManager = Depends(get_context_manager)
 ) -> ChatService:
+    """
+    Dependency injection function for ChatService.
+    
+    :param llm_service: An instance of LLMService
+    :param context_manager: An instance of ContextManager
+    :return: An instance of ChatService
+    """
     return ChatService(llm_service, context_manager)
 
 app = create_application()

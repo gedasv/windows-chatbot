@@ -7,5 +7,3 @@ pytest
 pytest-asyncio
 langchain
 langchain-groq
-flask
-requests

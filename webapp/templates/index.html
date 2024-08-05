@@ -10,18 +10,33 @@
 <body class="bg-gray-100">
     <div class="container mx-auto p-4">
         <h1 class="text-2xl font-bold mb-4">Window Manufacturing Chatbot</h1>
-        <div id="chat-history" class="bg-white p-4 rounded-lg shadow mb-4 h-96 overflow-y-auto"></div>
-        <form id="chat-form" class="flex">
-            <input type="text" id="user-input" class="flex-grow p-2 border rounded-l" placeholder="Type your message...">
-            <button type="submit" class="bg-blue-500 text-white p-2 rounded-r">Send</button>
-        </form>
-        <button id="clear-chat" class="mt-4 bg-red-500 text-white p-2 rounded">Clear Chat</button>
+        <div class="flex">
+            <div class="w-3/4 pr-4">
+                <div id="chat-history" class="bg-white p-4 rounded-lg shadow mb-4 h-96 overflow-y-auto"></div>
+                <form id="chat-form" class="flex">
+                    <input type="text" id="user-input" class="flex-grow p-2 border rounded-l" placeholder="Type your message...">
+                    <button type="submit" id="send-button" class="bg-blue-500 text-white p-2 rounded-r">Send</button>
+                </form>
+                <button id="clear-chat" class="mt-4 bg-red-500 text-white p-2 rounded">Clear Chat</button>
+            </div>
+            <div class="w-1/4">
+                <div id="context-history" class="bg-white p-4 rounded-lg shadow h-96 overflow-y-auto mb-4"></div>
+                <div id="context-info" class="bg-white p-4 rounded-lg shadow"></div>
+            </div>
+        </div>
     </div>
+
     <script>
+        // I would move this whole script to a separate file, but I'm keeping it here for simplicity
+        // Frontend is not my strong suit, so I'm using vanilla JS and Tailwind CSS for this simple chat interface :)
+
         const chatHistory = document.getElementById('chat-history');
+        const contextHistory = document.getElementById('context-history');
         const chatForm = document.getElementById('chat-form');
         const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
         const clearButton = document.getElementById('clear-chat');
+        const contextInfo = document.getElementById('context-info');
 
         function addMessage(role, content) {
             const messageDiv = document.createElement('div');
@@ -31,12 +46,38 @@
             chatHistory.scrollTop = chatHistory.scrollHeight;
         }
 
-        function loadChatHistory() {
-            fetch('/history')
+        function updateContextHistory(history) {
+            contextHistory.innerHTML = '';
+            history.forEach(([role, content]) => {
+                const contextDiv = document.createElement('div');
+                contextDiv.className = 'mb-2';
+                const truncatedContent = content.length > 100 ? content.substring(0, 97) + '...' : content;
+                contextDiv.innerHTML = `<span class="font-bold">${role.toUpperCase()}:</span> ${truncatedContent}`;
+                contextHistory.appendChild(contextDiv);
+            });
+            contextHistory.scrollTop = contextHistory.scrollHeight;
+        }
+
+        function updateContextInfo(info) {
+            const percentage = (info.current_length / info.max_length) * 100;
+            contextInfo.innerHTML = `
+                <div class="mb-2">Context: ${info.current_length}/${info.max_length}</div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${percentage}%"></div>
+                </div>
+            `;
+        }
+
+        function loadChatHistory(includeContext) {
+            const queryString = new URLSearchParams({ include_context: includeContext }).toString();
+
+            fetch(`/history?${queryString}`)
                 .then(response => response.json())
                 .then(data => {
                     chatHistory.innerHTML = '';
                     data.history.forEach(([role, content]) => addMessage(role, content));
+                    updateContextHistory(data.history);
+                    updateContextInfo(data.context_info);
                 });
         }
 
@@ -45,6 +86,8 @@
             const message = userInput.value.trim();
             if (message) {
                 addMessage('user', message);
+                sendButton.disabled = true;
+                sendButton.innerHTML = '<span class="animate-spin">↻</span> Sending...';
                 fetch('/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -53,6 +96,14 @@
                 .then(response => response.json())
                 .then(data => {
                     addMessage('ai', data.response);
+                    loadChatHistory(includeContext = true);
+                    sendButton.disabled = false;
+                    sendButton.innerHTML = 'Send';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    sendButton.disabled = false;
+                    sendButton.innerHTML = 'Send';
                 });
                 userInput.value = '';
             }
@@ -62,10 +113,13 @@
             fetch('/clear', {method: 'POST'})
                 .then(() => {
                     chatHistory.innerHTML = '';
+                    contextHistory.innerHTML = '';
+                    loadChatHistory(includeContext = true);
+
                 });
         });
 
-        loadChatHistory();
+        loadChatHistory(includeContext = true);
     </script>
 </body>
 </html>

@@ -47,19 +47,32 @@ async def test_chat_error_handling(client, mock_chat_service):
     assert response.json() == {"detail": "Test error"}
 
 @pytest.mark.asyncio
-async def test_get_conversation_history(client, mock_chat_service):
+async def test_get_conversation_history(client: TestClient, mock_chat_service):
     # Arrange
     expected_history = [["user", "Hello"], ["ai", "Hi there!"]]
-    mock_chat_service.get_conversation_history.return_value = expected_history
+    expected_context_info = {"current_length": 2, "max_length": 10}
+    
+    mock_chat_service.get_conversation_history = AsyncMock(return_value=expected_history)
+    mock_chat_service.get_context_info.return_value = expected_context_info
 
-    # Act
+    # Act & Assert for default behavior (without context)
     response = client.get("/api/conversation")
-
-    # Assert
     assert response.status_code == 200
-    assert response.json() == {"history": expected_history}
-    assert isinstance(response.json()["history"], list)
-    assert len(response.json()["history"]) == len(expected_history)
+    response_json = response.json()
+    assert response_json["history"] == expected_history
+    # assert "context_info" not in response_json
+
+    # Act & Assert with context included
+    response = client.get("/api/conversation?include_context=true")
+    assert response.status_code == 200
+    assert response.json() == {
+        "history": expected_history,
+        "context_info": expected_context_info
+    }
+
+    # Verify method calls
+    assert mock_chat_service.get_conversation_history.call_count == 2
+    assert mock_chat_service.get_context_info.call_count == 1
 
 def test_clear_conversation(client, mock_chat_service):
     # Act

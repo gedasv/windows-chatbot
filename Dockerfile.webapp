@@ -3,8 +3,10 @@ FROM python:3.11.9
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+ENV BACKEND_URL=http://backend:8000
+
+COPY webapp/requirements.txt webapp/requirements.txt
+RUN pip install --no-cache-dir -r webapp/requirements.txt
 
 COPY webapp /app/webapp
 

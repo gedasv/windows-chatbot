@@ -12,34 +12,50 @@ def mock_chat_groq():
 
 @pytest.mark.asyncio
 async def test_generate_response_content_attribute(mock_chat_groq):
+    # Arrange
     mock_chat_groq.ainvoke.return_value = AsyncMock(content="Test response")
     llm_service = LLMService()
+    
+    # Act
     response = await llm_service.generate_response("Test prompt")
+    
+    # Assert
     assert response == "Test response"
     mock_chat_groq.ainvoke.assert_called_once()
 
 @pytest.mark.asyncio
 async def test_generate_response_direct_string(mock_chat_groq):
+    # Arrange
     mock_chat_groq.ainvoke.return_value = "Direct test response"
     llm_service = LLMService()
+    
+    # Act
     response = await llm_service.generate_response("Test prompt")
+    
+    # Assert
     assert response == "Direct test response"
     mock_chat_groq.ainvoke.assert_called_once()
 
 @pytest.mark.asyncio
 async def test_generate_response_raw(mock_chat_groq):
+    # Arrange
     mock_generation = MagicMock()
     mock_generation.text = "Raw test response"
     mock_chat_groq.agenerate.return_value = MagicMock(
         generations=[[mock_generation]]
     )
     llm_service = LLMService(chat_model=mock_chat_groq)
+    
+    # Act
     response = await llm_service.generate_response_raw("Test prompt")
+    
+    # Assert
     assert response == "Raw test response"
     mock_chat_groq.agenerate.assert_called_once()
 
 @pytest.mark.asyncio
 async def test_generate_response_stream(mock_chat_groq):
+    # Arrange
     mock_stream = AsyncMock()
     mock_stream.__aiter__.return_value = [
         AsyncMock(content="Chunk 1"),
@@ -49,9 +65,12 @@ async def test_generate_response_stream(mock_chat_groq):
 
     llm_service = LLMService(chat_model=mock_chat_groq)
     chunks = []
+    
+    # Act
     async for chunk in llm_service.generate_response_stream("Test prompt"):
         chunks.append(chunk)
 
+    # Assert
     assert chunks == ["Chunk 1", "Chunk 2"]
     mock_chat_groq.astream.assert_called_once()
 
@@ -60,15 +79,21 @@ async def test_generate_response_stream(mock_chat_groq):
 
 @pytest.mark.asyncio
 async def test_generate_response_error_handling(mock_chat_groq):
+    # Arrange
     mock_chat_groq.ainvoke.side_effect = Exception("API Error")
     llm_service = LLMService()
+    
+    # Act & Assert
     with pytest.raises(Exception):
         await llm_service.generate_response("Test prompt")
 
 @pytest.mark.asyncio
 async def test_generate_response_unexpected_type(mock_chat_groq):
+    # Arrange
     mock_chat_groq.ainvoke.return_value = 12345
     llm_service = LLMService()
+    
+    # Act & Assert
     with pytest.raises(RetryError) as exc_info:
         await llm_service.generate_response("Test prompt")
     

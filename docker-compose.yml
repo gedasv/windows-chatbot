@@ -14,5 +14,8 @@ services:
       dockerfile: Dockerfile.webapp
     ports:
       - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - BACKEND_URL=http://backend:8000
     depends_on:
       - backend
