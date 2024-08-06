@@ -5,10 +5,11 @@ A specialized chatbot for the window manufacturing industry, built with FastAPI 
 ## Project Overview
 
 Key features:
-- FastAPI backend for efficient API handling
-- Integration with Groq's LLM API for intelligent responses
-- Conversation context management
-- Simple web interface for easy interaction
+- FastAPI backend for API handling
+- LangChain integration for LLM interactions
+- Groq's LLM API for responses
+- Conversation context management 
+- Simple web interface
 - Dockerized setup for easy deployment
 
 ## Project Structure
